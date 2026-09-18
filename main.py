@@ -2,6 +2,7 @@ from fastmcp import FastMCP
 import os
 from contextlib import asynccontextmanager
 from collections import defaultdict
+import sys
 
 # Import the initialized Supabase client
 from core.db import init_supabase_client
@@ -44,6 +45,7 @@ async def add_expense(request: AddExpenseRequest) -> AddExpenseResponse:
     """Add a new expense entry to the database."""
     import core.db as core_db
     try:
+        print("my debug message", file=sys.stderr, flush=True)
         response = await core_db.supabase_client.table("expenses").insert({
             "date": request.date,
             "amount": request.amount,
@@ -52,7 +54,7 @@ async def add_expense(request: AddExpenseRequest) -> AddExpenseResponse:
             "note": request.note,
         }).execute()
 
-        return AddExpenseResponse(status="ok", id=response.data[0]["id"])
+        return AddExpenseResponse(status="ok", message="Expense has been added successfully")
     except Exception as e:
         return AddExpenseResponse(status="error", message=str(e))
 
