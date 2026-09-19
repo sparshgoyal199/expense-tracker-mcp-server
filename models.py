@@ -1,47 +1,96 @@
 from __future__ import annotations
 
-from typing import Annotated, List, Optional
+from typing import List, Optional
 from pydantic import BaseModel, Field
-import datetime
-
-DateStr = Annotated[
-    datetime.date,
-    Field(
-        description="Date in ISO format (YYYY-MM-DD)",
-        examples=["2026-09-10"],
-    ),
-]
+from enum import Enum
 
 
-# class ErrorResponse(BaseModel):
-#     status: str = "error"
-#     message: str
+class Category(str, Enum):
+    FOOD = "food"
+    TRANSPORT = "transport"
+    HOUSING = "housing"
+    UTILITIES = "utilities"
+    HEALTH = "health"
+    EDUCATION = "education"
+    FAMILY_KIDS = "family_kids"
+    ENTERTAINMENT = "entertainment"
+    SHOPPING = "shopping"
+    SUBSCRIPTIONS = "subscriptions"
+    PERSONAL_CARE = "personal_care"
+    GIFTS_DONATIONS = "gifts_donations"
+    FINANCE_FEES = "finance_fees"
+    BUSINESS = "business"
+    TRAVEL = "travel"
+    HOME = "home"
+    PET = "pet"
+    TAXES = "taxes"
+    INVESTMENTS = "investments"
+    MISC = "misc"
 
+
+# ---------- add_expense ----------
 
 class AddExpenseRequest(BaseModel):
-    date: DateStr
-    amount: float = Field(..., description="Expense amount")
-    category: str = Field(..., description="Expense category")
-    subcategory: str = Field("", description="Expense subcategory")
-    note: str = Field("", description="Free-form note")
+    date: str = Field(
+        ...,
+        description="Expense date in ISO format (YYYY-MM-DD).",
+        examples=["2026-09-10"]
+    )
+    amount: float = Field(
+        ...,
+        description="Amount spent."
+    )
+    category: Category = Field(
+        ...,
+        description="Category of the expense."
+    )
+    note: str = Field(
+        ...,
+        description="Free-form note describing the expense."
+    )
+
 
 class AddExpenseResponse(BaseModel):
     status: str = "ok"
     message: Optional[str] = None
 
 
+# ---------- list_expenses ----------
+
 class ListExpensesRequest(BaseModel):
-    start_date: DateStr
-    end_date: DateStr
+    start_date: Optional[str] = Field(
+        default=None,
+        description="Start date for the filter in ISO format (YYYY-MM-DD).",
+        examples=["2026-09-10"]
+    )
+    end_date: Optional[str] = Field(
+        default=None,
+        description="End date for the filter in ISO format (YYYY-MM-DD).",
+        examples=["2026-09-10"]
+    )
+    category: Optional[Category] = Field(
+        default=None,
+        description="Filter expenses by category."
+    )
+    amount: Optional[float] = Field(
+        default=None,
+        description="Filter expenses by exact amount."
+    )
 
 
 class ExpenseItem(BaseModel):
-    id: int
-    date: DateStr
+    id: int = Field(
+        ...,
+        description="Unique identifier of the expense record in the database table."
+    )
+    date: str = Field(
+        ...,
+        description="Expense date in ISO format (YYYY-MM-DD).",
+        examples=["2026-09-10"]
+    )
     amount: float
-    category: str
-    subcategory: str
-    note: Optional[str] = ""
+    category: Category
+    note: str
 
 
 class ListExpensesResponse(BaseModel):
@@ -51,14 +100,26 @@ class ListExpensesResponse(BaseModel):
 
 
 # ---------- summarize ----------
+
 class SummarizeRequest(BaseModel):
-    start_date: DateStr
-    end_date: DateStr
-    category: Optional[str] = None
+    start_date: str = Field(
+        ...,
+        description="Start date for the summary in ISO format (YYYY-MM-DD).",
+        examples=["2026-09-10"]
+    )
+    end_date: str = Field(
+        ...,
+        description="End date for the summary in ISO format (YYYY-MM-DD).",
+        examples=["2026-09-10"]
+    )
+    category: Optional[Category] = Field(
+        default=None,
+        description="Category to summarize. If omitted, summarize all categories."
+    )
 
 
 class SummaryItem(BaseModel):
-    category: str
+    category: Category
     total_amount: float
 
 
@@ -69,39 +130,50 @@ class SummarizeResponse(BaseModel):
 
 
 # ---------- edit_expense_* ----------
+
 class EditExpenseAmountRequest(BaseModel):
-    date: DateStr
-    category: str
-    subcategory: str
-    amount: float
+    id: int = Field(
+        ...,
+        description="Unique identifier of the expense record in the database table."
+    )
+    amount: float = Field(
+        ...,
+        description="New amount for the expense."
+    )
 
 
 class EditExpenseDateRequest(BaseModel):
-    date: DateStr
-    category: str
-    subcategory: str
-    new_date: DateStr
+    id: int = Field(
+        ...,
+        description="Unique identifier of the expense record in the database table."
+    )
+    new_date: str = Field(
+        ...,
+        description="New expense date in ISO format (YYYY-MM-DD).",
+        examples=["2026-09-10"]
+    )
 
 
 class EditExpenseCategoryRequest(BaseModel):
-    date: DateStr
-    category: str
-    subcategory: str
-    new_category: str
-
-
-class EditExpenseSubCategoryRequest(BaseModel):
-    date: DateStr
-    category: str
-    subcategory: str
-    new_subcategory: str
+    id: int = Field(
+        ...,
+        description="Unique identifier of the expense record in the database table."
+    )
+    new_category: Category = Field(
+        ...,
+        description="New category for the expense."
+    )
 
 
 class EditExpenseNoteRequest(BaseModel):
-    date: DateStr
-    category: str
-    subcategory: str
-    new_note: str
+    id: int = Field(
+        ...,
+        description="Unique identifier of the expense record in the database table."
+    )
+    new_note: str = Field(
+        ...,
+        description="New note for the expense."
+    )
 
 
 class EditExpenseResponse(BaseModel):
@@ -110,12 +182,15 @@ class EditExpenseResponse(BaseModel):
 
 
 # ---------- delete_expense ----------
+
 class DeleteExpenseRequest(BaseModel):
-    date: DateStr
-    category: str
-    subcategory: str
+    id: int = Field(
+        ...,
+        description="Unique identifier of the expense record in the database table."
+    )
 
 
 class DeleteExpenseResponse(BaseModel):
     status: str
     message: str
+

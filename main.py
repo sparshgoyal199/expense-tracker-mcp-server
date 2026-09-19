@@ -15,7 +15,6 @@ from models import (
     EditExpenseAmountRequest,
     EditExpenseDateRequest,
     EditExpenseCategoryRequest,
-    EditExpenseSubCategoryRequest,
     EditExpenseNoteRequest,
     EditExpenseResponse,
     DeleteExpenseRequest,
@@ -45,13 +44,12 @@ async def add_expense(request: AddExpenseRequest) -> AddExpenseResponse:
     """Add a new expense entry to the database."""
     import core.db as core_db
     try:
-        print("my debug message", file=sys.stderr, flush=True)
+        # print(type(request.date), file=sys.stderr, flush=True)
         response = await core_db.supabase_client.table("expenses").insert({
             "date": request.date,
             "amount": request.amount,
-            "category": request.category,
-            "subcategory": request.subcategory,
-            "note": request.note,
+            "category": request.category.value,
+            "note": request.note
         }).execute()
 
         return AddExpenseResponse(status="ok", message="Expense has been added successfully")
@@ -61,16 +59,34 @@ async def add_expense(request: AddExpenseRequest) -> AddExpenseResponse:
 
 @mcp.tool()
 async def list_expenses(request: ListExpensesRequest) -> ListExpensesResponse:
-    """List expense entries within an inclusive date range."""
+    """List expenses with optional filters for date range, category, and amount."""
     import core.db as core_db
     try:
-        response = await core_db.supabase_client.table("expenses") \
-            .select("*") \
-            .gte("date", request.start_date) \
-            .lte("date", request.end_date) \
-            .order("id") \
-            .execute()
+        query = core_db.supabase_client.table("expenses").select("*")
+            
+        if request.start_date:
+            print("I am inside date", file=sys.stderr, flush=True)
+            query = (
+                query
+                .gte("date", request.start_date)
+            )
 
+        if request.end_date:
+            query = (
+                query
+                .lte("date", request.end_date)
+                )
+
+        if request.category:
+            print(f"I am inside category: {request.category.value}", file=sys.stderr, flush=True)
+            query = query.eq("category", request.category.value.value) 
+
+        if request.amount:
+            print(f"I am inside amount: {request.amount}", file=sys.stderr, flush=True)
+            query = query.eq("amount", request.amount)
+
+        response = await query.execute()
+        print(f"response: {response}", file=sys.stderr, flush=True)
         items = [ExpenseItem(**row) for row in response.data]
         return ListExpensesResponse(status="ok", expenses=items)
     except Exception as e:
@@ -88,7 +104,7 @@ async def summarize(request: SummarizeRequest) -> SummarizeResponse:
             .lte("date", request.end_date)
 
         if request.category:
-            query = query.eq("category", request.category)
+            query = query.eq("category", request.category.value)
 
         response = await query.execute()
 
@@ -107,14 +123,12 @@ async def summarize(request: SummarizeRequest) -> SummarizeResponse:
 
 @mcp.tool()
 async def edit_expense_amount(request: EditExpenseAmountRequest) -> EditExpenseResponse:
-    """Edit the amount of a particular expense (or multiple if matching)."""
+    """Update the amount of an expense by its ID. If the ID is unknown, call list_expenses first."""
     import core.db as core_db
     try:
         response = await core_db.supabase_client.table("expenses") \
             .update({"amount": request.amount}) \
-            .eq("date", request.date) \
-            .eq("category", request.category) \
-            .eq("subcategory", request.subcategory) \
+            .eq("id", request.id) \
             .execute()
 
         if not response.data:
@@ -131,9 +145,7 @@ async def edit_expense_date(request: EditExpenseDateRequest) -> EditExpenseRespo
     try:
         response = await core_db.supabase_client.table("expenses") \
             .update({"date": request.new_date}) \
-            .eq("date", request.date) \
-            .eq("category", request.category) \
-            .eq("subcategory", request.subcategory) \
+            .eq("id", request.id) \
             .execute()
 
         if not response.data:
@@ -150,33 +162,12 @@ async def edit_expense_category(request: EditExpenseCategoryRequest) -> EditExpe
     try:
         response = await core_db.supabase_client.table("expenses") \
             .update({"category": request.new_category}) \
-            .eq("date", request.date) \
-            .eq("category", request.category) \
-            .eq("subcategory", request.subcategory) \
+            .eq("id", request.id) \
             .execute()
 
         if not response.data:
             return EditExpenseResponse(status="error", message="Expense not found.")
         return EditExpenseResponse(status="ok", message="Category updated successfully.")
-    except Exception as e:
-        return EditExpenseResponse(status="error", message=str(e))
-
-
-@mcp.tool()
-async def edit_expense_sub_category(request: EditExpenseSubCategoryRequest) -> EditExpenseResponse:
-    """Edit the subcategory of a particular expense."""
-    import core.db as core_db
-    try:
-        response = await core_db.supabase_client.table("expenses") \
-            .update({"subcategory": request.new_subcategory}) \
-            .eq("date", request.date) \
-            .eq("category", request.category) \
-            .eq("subcategory", request.subcategory) \
-            .execute()
-
-        if not response.data:
-            return EditExpenseResponse(status="error", message="Expense not found.")
-        return EditExpenseResponse(status="ok", message="Subcategory updated successfully.")
     except Exception as e:
         return EditExpenseResponse(status="error", message=str(e))
 
@@ -188,9 +179,7 @@ async def edit_expense_note(request: EditExpenseNoteRequest) -> EditExpenseRespo
     try:
         response = await core_db.supabase_client.table("expenses") \
             .update({"note": request.new_note}) \
-            .eq("date", request.date) \
-            .eq("category", request.category) \
-            .eq("subcategory", request.subcategory) \
+            .eq("id", request.id) \
             .execute()
 
         if not response.data:
@@ -207,9 +196,7 @@ async def delete_expense(request: DeleteExpenseRequest) -> DeleteExpenseResponse
     try:
         response = await core_db.supabase_client.table("expenses") \
             .delete() \
-            .eq("date", request.date) \
-            .eq("category", request.category) \
-            .eq("subcategory", request.subcategory) \
+            .eq("id", request.id) \
             .execute()
 
         if not response.data:
@@ -218,11 +205,6 @@ async def delete_expense(request: DeleteExpenseRequest) -> DeleteExpenseResponse
     except Exception as e:
         return DeleteExpenseResponse(status="error", message=str(e))
 
-
-@mcp.resource("expense://categories", mime_type="application/json")
-def categories():
-    with open(CATEGORIES_PATH, "r", encoding="utf-8") as f:
-        return f.read()
 
 
 if __name__ == "__main__":
