@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Protected Page</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 600px;
+      margin: 40px auto;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+    pre {
+      background: #222;
+      color: #0f0;
+      padding: 16px;
+      border-radius: 6px;
+      overflow-x: auto;
+    }
+    button {
+      padding: 8px 16px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>Protected Page</h1>
+  <p>This page asks the backend for data. The backend only gives it to us
+     because our session cookie proves we logged in and our ID token was
+     verified.</p>
+
+  <!-- Where the claims will be shown once we get them -->
+  <div id="result">Loading...</div>
+
+  <br>
+  <a href="/logout"><button>Logout</button></a>
+
+  <script>
+    // Step 1: As soon as the page loads, ask the backend for the
+    // protected data. `fetch` just makes an HTTP GET request from
+    // JavaScript, the same way the browser does when you type a URL.
+    fetch("/api/protected")
+      .then(function (response) {
+        // response.json() reads the body and parses it as JSON.
+        // It returns a "promise", so we use another .then() to wait for it.
+        return response.json();
+      })
+      .then(function (data) {
+        // Step 2: Show whatever the backend sent us on the page.
+        var resultBox = document.getElementById("result");
+
+        if (data.error) {
+          resultBox.innerHTML = "<p>Not logged in. <a href='/'>Go back</a></p>";
+        } else {
+          // JSON.stringify with (null, 2) just pretty-prints the object
+          // with 2-space indentation so it's readable.
+          resultBox.innerHTML =
+            "<p>" + data.message + "</p>" +
+            "<pre>" + JSON.stringify(data.claims, null, 2) + "</pre>";
+        }
+      })
+      .catch(function (error) {
+        // This runs if the network request itself fails.
+        document.getElementById("result").innerHTML =
+          "Something went wrong: " + error;
+      });
+  </script>
+</body>
+</html>

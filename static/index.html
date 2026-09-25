@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>OIDC Demo</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      background: #f5f5f5;
+    }
+    button {
+      padding: 12px 24px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>OIDC Demo App</h1>
+  <p>Click below to log in with WorkOS AuthKit.</p>
+
+  <!-- This is a plain link, not a form or fetch call.
+       Clicking it just navigates the browser to /login,
+       and the backend takes it from there. -->
+  <a href="/login">
+    <button>Login</button>
+  </a>
+</body>
+</html>
