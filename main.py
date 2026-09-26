@@ -23,9 +23,6 @@ from models import (
     DeleteExpenseResponse,
 )
 
-CATEGORIES_PATH = os.path.join(os.path.dirname(__file__), "categories.json")
-
-
 @asynccontextmanager
 async def lifespan(app: FastMCP):
     import core.db as core_db
@@ -227,4 +224,4 @@ async def delete_expense(request: DeleteExpenseRequest) -> DeleteExpenseResponse
 #     mcp.run()
 
 if __name__ == "__main__":
-    mcp.run(transport="http", host="localhost", port=8003)
+    mcp.run(transport="http", host="0.0.0.0", port=8000)
