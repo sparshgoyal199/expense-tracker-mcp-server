@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from collections import defaultdict
 from fastmcp.server.auth.providers.workos import AuthKitProvider
 from fastmcp.server.auth.providers.jwt import JWTVerifier
+from dotenv import load_dotenv
 import sys
 
 # Import the initialized Supabase client
@@ -22,6 +23,8 @@ from models import (
     DeleteExpenseRequest,
     DeleteExpenseResponse,
 )
+
+load_dotenv()
 
 @asynccontextmanager
 async def lifespan(app: FastMCP):
@@ -47,12 +50,12 @@ class DebugJWTVerifier(JWTVerifier):
         return access_token
 
 auth = AuthKitProvider(
-    authkit_domain=os.environ["AUTHKIT_DOMAIN"],
-    base_url=os.environ["BASE_URL"],   # Dhyan dena: yahan tumhara port 8003 hai, /mcp nahi
+    authkit_domain=os.getenv("AUTHKIT_DOMAIN", None),
+    base_url=os.getenv("BASE_URL", "http://localhost:8000"),   # Dhyan dena: yahan tumhara port 8003 hai, /mcp nahi
     token_verifier=DebugJWTVerifier(
-        jwks_uri=f"{os.environ['AUTHKIT_DOMAIN']}/oauth2/jwks",
-        issuer=os.environ["AUTHKIT_DOMAIN"],
-        audience=f'{os.environ["BASE_URL"]}/mcp', # Yahan /mcp aayega
+        jwks_uri=f"{os.getenv('AUTHKIT_DOMAIN', None)}/oauth2/jwks",
+        issuer=os.getenv('AUTHKIT_DOMAIN', None),
+        audience=f'{os.getenv("BASE_URL", None)}/mcp', # Yahan /mcp aayega
     ),
 )
 
@@ -84,7 +87,7 @@ async def list_expenses(request: ListExpensesRequest) -> ListExpensesResponse:
     try:
         user_id = await core_db.get_or_create_user()
         query = core_db.supabase_client.table("expenses").select("*").eq("user_id", user_id)
-
+ 
         if request.start_date:
             query = query.gte("date", request.start_date)
         if request.end_date:
@@ -143,7 +146,7 @@ async def edit_expense_amount(request: EditExpenseAmountRequest) -> EditExpenseR
     except Exception as e:
         return EditExpenseResponse(status="error", message=str(e))
 
-
+    
 @mcp.tool()
 async def edit_expense_date(request: EditExpenseDateRequest) -> EditExpenseResponse:
     """Edit the expense date of a particular expense."""

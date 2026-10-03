@@ -4,8 +4,8 @@ import os
 
 load_dotenv()
 
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+SUPABASE_URL = os.getenv("SUPABASE_URL", None)
+SUPABASE_KEY = os.getenv("SUPABASE_KEY", None)
 
 supabase_client: AsyncClient | None = None   # abhi None, lifespan mein set hoga
 
