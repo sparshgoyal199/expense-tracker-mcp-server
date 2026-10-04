@@ -50,12 +50,12 @@ class DebugJWTVerifier(JWTVerifier):
         return access_token
 
 auth = AuthKitProvider(
-    authkit_domain=os.getenv("AUTHKIT_DOMAIN", None),
-    base_url=os.getenv("BASE_URL", "http://localhost:8000"),   # Dhyan dena: yahan tumhara port 8003 hai, /mcp nahi
+    authkit_domain=os.getenv("AUTHKIT_DOMAIN"),
+    base_url=os.getenv("BASE_URL"),   # Dhyan dena: yahan tumhara port 8003 hai, /mcp nahi
     token_verifier=DebugJWTVerifier(
-        jwks_uri=f"{os.getenv('AUTHKIT_DOMAIN', None)}/oauth2/jwks",
-        issuer=os.getenv('AUTHKIT_DOMAIN', None),
-        audience=f'{os.getenv("BASE_URL", None)}/mcp', # Yahan /mcp aayega
+        jwks_uri=f"{os.getenv('AUTHKIT_DOMAIN')}/oauth2/jwks",
+        issuer=os.getenv('AUTHKIT_DOMAIN'),
+        audience=f'{os.getenv("BASE_URL")}/mcp', # Yahan /mcp aayega
     ),
 )
 
